@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lofi Cafe</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #fddde6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 4px;
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  .player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    background: rgba(253, 221, 230, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 16px rgba(173,63,115,0.10);
+  }
+  .artwork {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.2);
+  }
+  .info { flex: 1; min-width: 0; }
+  .info-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: rgba(100,30,60,0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .info-track {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(80,20,45,0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity .15s;
+    color: rgba(80,20,45,0.7);
+    border-radius: 6px;
+  }
+  button:hover { opacity: .7; background: rgba(255,255,255,0.3); }
+  .btn-mute { width: 28px; height: 28px; }
+  .volume-wrap { display: flex; align-items: center; width: 64px; }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(173,63,115,0.2);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(80,20,45,0.8);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(80,20,45,0.8);
+    border: none;
+    cursor: pointer;
+  }
+  .btn-play {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% !important;
+    background: rgba(80,20,45,0.85) !important;
+    color: #fddde6 !important;
+  }
+  .btn-play:hover { opacity: .85 !important; }
+  .btn-external { width: 28px; height: 28px; color: rgba(80,20,45,0.4); }
+  .loading-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(80,20,45,0.5);
+    animation: pulse 1.2s ease-in-out infinite;
+    margin-left: 4px;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+</head>
+<body>
+
+<div class="player">
+  <img class="artwork" id="artwork" src="https://loficafe.net/_next/image?url=%2Fbackgrounds%2Fthumbs%2Fchill.webp&w=640&q=75" alt="Lofi Cafe" onerror="this.style.background='rgba(255,255,255,0.2)'"/>
+  <div class="info">
+    <div class="info-label">Studying · Lofi Cafe</div>
+    <div class="info-track" id="track-name">Press play to start</div>
+  </div>
+  <div class="controls">
+    <button class="btn-mute" id="btn-mute" onclick="toggleMute()" title="Mute">
+      <svg id="icon-sound" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/>
+        <path d="M16 9a5 5 0 0 1 0 6"/>
+        <path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>
+      </svg>
+      <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/>
+        <line x1="22" y1="2" x2="2" y2="22"/>
+      </svg>
+    </button>
+    <div class="volume-wrap">
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)"/>
+    </div>
+    <button class="btn-play" id="btn-play" onclick="togglePlay()" title="Play">
+      <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>
+      </svg>
+      <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none">
+        <rect x="6" y="4" width="4" height="16" rx="1"/>
+        <rect x="14" y="4" width="4" height="16" rx="1"/>
+      </svg>
+    </button>
+    <a href="https://loficafe.net/studying" target="_blank" rel="noopener noreferrer" class="btn-external" title="Open Lofi Cafe">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<audio id="audio" preload="none" crossorigin="anonymous"></audio>
+
+<script>
+  const audio = document.getElementById('audio');
+  const trackName = document.getElementById('track-name');
+  const artwork = document.getElementById('artwork');
+  const STREAM_URL = 'https://radio.loficafe.net/listen/studying/radio.mp3';
+  const META_URL = 'https://radio.loficafe.net/api/nowplaying/studying';
+  let playing = false;
+  let metaInterval = null;
+
+  async function fetchTrackInfo() {
+    try {
+      const res = await fetch(META_URL);
+      const data = await res.json();
+      const title = data.now_playing?.song?.title || 'Lofi Hip-Hop';
+      const artist = data.now_playing?.song?.artist || 'Lofi Cafe';
+      const art = data.now_playing?.song?.art || 'https://loficafe.net/backgrounds/thumbs/chill.webp';
+
+      trackName.textContent = title + ' — ' + artist;
+      artwork.src = art;
+
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title,
+          artist,
+          album: 'Studying Station',
+          artwork: [{ src: art, sizes: '512x512' }]
+        });
+      }
+    } catch(e) {
+      // silently fail, keep previous metadata
+    }
+  }
+
+  function setMediaSessionHandlers() {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.setActionHandler('play', () => {
+      audio.play();
+      playing = true;
+      document.getElementById('icon-play').style.display = 'none';
+      document.getElementById('icon-pause').style.display = '';
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audio.pause();
+      playing = false;
+      document.getElementById('icon-play').style.display = '';
+      document.getElementById('icon-pause').style.display = 'none';
+      trackName.textContent = 'Paused';
+    });
+  }
+
+  function togglePlay() {
+    if (!audio.src || audio.src === window.location.href) {
+      audio.src = STREAM_URL;
+    }
+    if (playing) {
+      audio.pause();
+      playing = false;
+      document.getElementById('icon-play').style.display = '';
+      document.getElementById('icon-pause').style.display = 'none';
+      trackName.textContent = 'Paused';
+      if (metaInterval) { clearInterval(metaInterval); metaInterval = null; }
+    } else {
+      audio.play().catch(() => {
+        trackName.textContent = 'Could not load stream';
+      });
+      playing = true;
+      document.getElementById('icon-play').style.display = 'none';
+      document.getElementById('icon-pause').style.display = '';
+      fetchTrackInfo();
+      metaInterval = setInterval(fetchTrackInfo, 30000);
+      setMediaSessionHandlers();
+    }
+  }
+
+  function toggleMute() {
+    audio.muted = !audio.muted;
+    document.getElementById('icon-sound').style.display = audio.muted ? 'none' : '';
+    document.getElementById('icon-muted').style.display = audio.muted ? '' : 'none';
+  }
+
+  function setVolume(v) {
+    audio.volume = parseFloat(v);
+    if (audio.muted && v > 0) {
+      audio.muted = false;
+      document.getElementById('icon-sound').style.display = '';
+      document.getElementById('icon-muted').style.display = 'none';
+    }
+  }
+
+  audio.addEventListener('error', () => {
+    trackName.textContent = 'Stream error — try refreshing';
+    playing = false;
+    document.getElementById('icon-play').style.display = '';
+    document.getElementById('icon-pause').style.display = 'none';
+  });
+
+  audio.volume = 0.8;
+</script>
+</body>
+</html>
