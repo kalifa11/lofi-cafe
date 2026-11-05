@@ -176,7 +176,7 @@
       const data = await res.json();
       const title = data.now_playing?.song?.title || 'Lofi Hip-Hop';
       const artist = data.now_playing?.song?.artist || 'Lofi Cafe';
-      const art = data.now_playing?.song?.art || 'https://loficafe.net/backgrounds/thumbs/chill.webp';
+      const art = data.now_playing?.song?.art || 'https://loficafe.net/_next/image?url=%2Fbackgrounds%2Fthumbs%2Fchill.webp&w=640&q=75';
 
       trackName.textContent = title + ' — ' + artist;
       artwork.src = art;
